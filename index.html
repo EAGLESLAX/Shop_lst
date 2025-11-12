@@ -100,6 +100,7 @@
 
 <script>
 (() => {
+    // Dirección base (puedes cambiarla si hace falta)
     const baseDireccion = "Calle Jacinto 1126, La Morita, 22245 Tijuana, B.C.";
     const articulosBody = document.getElementById("articulosBody");
     const catalogBody = document.getElementById("catalogBody");
@@ -118,6 +119,7 @@
     let proximoId = 3;
     let costoEnvio = 0;
 
+    // --- Actualizaciones de UI ---
     function actualizarLista() {
         articulosBody.innerHTML = "";
         let totalGeneral = 0;
@@ -195,19 +197,61 @@
         document.getElementById("page-list").style.display = "block";
     });
 
-    // Cálculo de distancia con Google Maps API (reemplaza "TU_API_KEY_AQUI")
+    // ---------------------------
+    // Geocodificación y distancia
+    // ---------------------------
+
+    // Cache para la geocodificación de la dirección base (evita repetir)
+    let cacheBaseCoords = null;
+
+    // Llamada a Nominatim (OpenStreetMap) para obtener lat/lon de una dirección (sin API key)
+    async function geocodeNominatim(address) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+        const res = await fetch(url, {
+            headers: {
+                // Nominatim pide identificar el "User-Agent"/"Referer" idealmente.
+                // En navegador no se puede cambiar el User-Agent, pero el Referer será tu dominio.
+                'Accept-Language': 'es'
+            }
+        });
+        if (!res.ok) throw new Error("Error en geocoding");
+        const json = await res.json();
+        if (!json || json.length === 0) throw new Error("No se encontró la dirección");
+        // toma el primer resultado
+        const { lat, lon } = json[0];
+        return { lat: parseFloat(lat), lon: parseFloat(lon) };
+    }
+
+    // Haversine: distancia en kilómetros entre 2 coordenadas
+    function haversineKm(a, b) {
+        const toRad = v => v * Math.PI / 180;
+        const R = 6371; // km radio tierra
+        const dLat = toRad(b.lat - a.lat);
+        const dLon = toRad(b.lon - a.lon);
+        const lat1 = toRad(a.lat);
+        const lat2 = toRad(b.lat);
+
+        const sinDLat = Math.sin(dLat/2);
+        const sinDLon = Math.sin(dLon/2);
+        const aa = sinDLat*sinDLat + sinDLon*sinDLon * Math.cos(lat1) * Math.cos(lat2);
+        const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1-aa));
+        return R * c;
+    }
+
+    // Calcula distancia (km) entre baseDireccion y destino.
+    // Primero intenta geocodificar con Nominatim; si falla, lanza error.
     async function calcularDistancia(origen, destino) {
-        const key = "TU_API_KEY_AQUI";
-        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origen)}&destinations=${encodeURIComponent(destino)}&key=${key}&mode=driving`;
-
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-        const data = JSON.parse((await res.json()).contents);
-
-        if (data.rows[0].elements[0].status === "OK") {
-            const metros = data.rows[0].elements[0].distance.value;
-            return metros / 1000; // kilómetros
-        } else {
-            throw new Error("No se pudo calcular la distancia");
+        try {
+            // geocode base (cached)
+            if (!cacheBaseCoords) {
+                cacheBaseCoords = await geocodeNominatim(origen);
+            }
+            const destCoords = await geocodeNominatim(destino);
+            const km = haversineKm(cacheBaseCoords, destCoords);
+            return km;
+        } catch (err) {
+            // re-lanza para que el llamador maneje el error
+            throw err;
         }
     }
 
@@ -221,16 +265,18 @@
         totalGeneralElem.textContent = "Calculando envío...";
         try {
             const km = await calcularDistancia(baseDireccion, destino);
+            // tarifa por km (puedes ajustar)
             costoEnvio = km * 20;
             actualizarLista();
-            alert(`Distancia: ${km.toFixed(1)} km\nCosto de envío: $${costoEnvio.toFixed(2)}`);
+            alert(`Distancia aproximada: ${km.toFixed(2)} km\nCosto de envío: $${costoEnvio.toFixed(2)}`);
         } catch (err) {
             totalGeneralElem.textContent = "Error al calcular distancia.";
             console.error(err);
-            alert("No se pudo calcular la distancia. Verifica tu dirección o API Key.");
+            alert("No se pudo calcular la distancia. Verifica tu dirección o intenta otra dirección. (" + err.message + ")");
         }
     });
 
+    // Navegación de páginas
     document.getElementById("btn-list").addEventListener("click", () => {
         document.getElementById("page-list").style.display = "block";
         document.getElementById("page-catalog").style.display = "none";
