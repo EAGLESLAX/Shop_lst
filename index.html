@@ -1,162 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Distancia por ruta real sin API Key</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruta entre direcciones (sin API Key)</title>
 
-<!-- Librería de mapas Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Librerías -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f5f7fa;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
-  }
-  #map {
-    height: 450px;
-    width: 100%;
-    max-width: 900px;
-    margin: 20px auto;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  input {
-    width: 350px;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-  button {
-    padding: 10px 20px;
-    background: #2980b9;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  button:hover {
-    background: #1f6391;
-  }
-  #info {
-    font-size: 18px;
-    margin-top: 20px;
-    font-weight: bold;
-  }
-</style>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    input {
+      width: 300px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    #distancia {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>🚗 Distancia de conducción real (sin Google)</h2>
-  <p>Origen fijo: <b>Calle Jacinto 1126, La Morita, Tijuana</b></p>
+  <h2>Ruta desde Calle Jacinto 1126 (La Morita) hasta destino</h2>
 
-  <input type="text" id="destino" placeholder="Ingresa dirección destino (ej. Plaza Río, Tijuana)">
-  <button onclick="calcularRuta()">Calcular Ruta</button>
+  <div class="controls">
+    <input type="text" id="destino" placeholder="Ingresa destino (ej. Plaza Río Tijuana)" />
+    <button onclick="calcularRuta()">Calcular ruta</button>
+  </div>
 
   <div id="map"></div>
-  <div id="info"></div>
+  <p id="distancia"></p>
 
-<script>
-// Coordenadas del origen (Calle Jacinto 1126, La Morita, Tijuana)
-const origenFijo = {
-  nombre: "Calle Jacinto 1126, La Morita, Tijuana",
-  lat: 32.462227,
-  lon: -116.880843
-};
+  <script>
+    // Coordenadas fijas de origen (Calle Jacinto 1126, La Morita, Tijuana)
+    const origen = [32.4959, -116.8851]; 
 
-// Inicializa el mapa
-const map = L.map('map').setView([origenFijo.lat, origenFijo.lon], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+    // Inicializa el mapa
+    const map = L.map("map").setView(origen, 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
 
-// Marcador del origen
-L.marker([origenFijo.lat, origenFijo.lon])
-  .addTo(map)
-  .bindPopup(`<b>Origen:</b><br>${origenFijo.nombre}`)
-  .openPopup();
+    let controlRuta;
 
-let markerDestino = null;
-let rutaLayer = null;
+    async function calcularRuta() {
+      const destinoTexto = document.getElementById("destino").value.trim();
+      if (!destinoTexto) {
+        alert("Por favor, ingresa una dirección destino.");
+        return;
+      }
 
-// Función: convertir dirección a coordenadas (geocodificación)
-async function geocodificarDireccion(direccion) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  if (data.length > 0) {
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), nombre: data[0].display_name };
-  } else {
-    throw new Error("No se encontró la dirección destino.");
-  }
-}
+      // Geocodificar destino usando Nominatim (gratuito)
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinoTexto + ', Tijuana, BC, Mexico')}`;
+      const resp = await fetch(url);
+      const datos = await resp.json();
 
-// Función: obtener ruta de conducción real usando OSRM
-async function obtenerRuta(origen, destino) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${origen.lon},${origen.lat};${destino.lon},${destino.lat}?overview=full&geometries=geojson`;
-  const resp = await fetch(url);
-  const data = await resp.json();
+      if (datos.length === 0) {
+        alert("No se encontró la dirección destino.");
+        return;
+      }
 
-  if (data.code === "Ok") {
-    const ruta = data.routes[0];
-    return {
-      distanciaKm: ruta.distance / 1000,
-      duracionMin: ruta.duration / 60,
-      geometry: ruta.geometry
-    };
-  } else {
-    throw new Error("No se pudo calcular la ruta.");
-  }
-}
+      const destino = [parseFloat(datos[0].lat), parseFloat(datos[0].lon)];
 
-// Acción principal
-async function calcularRuta() {
-  const destinoTexto = document.getElementById("destino").value.trim();
-  const infoElem = document.getElementById("info");
+      // Eliminar ruta anterior
+      if (controlRuta) {
+        map.removeControl(controlRuta);
+      }
 
-  if (!destinoTexto) {
-    alert("Por favor ingresa una dirección de destino.");
-    return;
-  }
-
-  infoElem.textContent = "Calculando ruta...";
-  try {
-    // Geocodificar dirección destino
-    const destino = await geocodificarDireccion(destinoTexto);
-
-    // Obtener ruta real
-    const ruta = await obtenerRuta(origenFijo, destino);
-
-    // Eliminar ruta anterior si existe
-    if (markerDestino) map.removeLayer(markerDestino);
-    if (rutaLayer) map.removeLayer(rutaLayer);
-
-    // Marcar destino
-    markerDestino = L.marker([destino.lat, destino.lon])
-      .addTo(map)
-      .bindPopup(`<b>Destino:</b><br>${destino.nombre}`)
-      .openPopup();
-
-    // Dibujar la línea de la ruta en el mapa
-    rutaLayer = L.geoJSON(ruta.geometry, { color: 'red', weight: 4 }).addTo(map);
-
-    // Ajustar el zoom para ver toda la ruta
-    map.fitBounds(rutaLayer.getBounds());
-
-    infoElem.innerHTML = `
-      🚘 <b>Distancia recorrida:</b> ${ruta.distanciaKm.toFixed(2)} km<br>
-      ⏱️ <b>Duración estimada:</b> ${ruta.duracionMin.toFixed(1)} minutos
-    `;
-  } catch (err) {
-    console.error(err);
-    infoElem.textContent = "❌ No se pudo calcular la ruta.";
-  }
-}
-</script>
+      // Crear nueva ruta
+      controlRuta = L.Routing.control({
+        waypoints: [L.latLng(origen[0], origen[1]), L.latLng(destino[0], destino[1])],
+        language: "es",
+        lineOptions: { styles: [{ color: "#007bff", weight: 5 }] },
+        routeWhileDragging: false,
+        createMarker: (i, wp, nWps) =>
+          L.marker(wp.latLng).bindPopup(i === 0 ? "Origen" : "Destino"),
+      })
+        .on("routesfound", (e) => {
+          const distanciaKm = (e.routes[0].summary.totalDistance / 1000).toFixed(2);
+          document.getElementById("distancia").textContent = `Distancia recorrida: ${distanciaKm} km`;
+        })
+        .addTo(map);
+    }
+  </script>
 </body>
 </html>
