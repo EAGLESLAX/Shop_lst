@@ -1,203 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Gestor de Artículos Mejorado</title>
-    <style>
-        /* (Mismas estilos que antes con algunos añadidos para el listado del catálogo) */
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            margin: 0; padding: 0;
-            display: flex; flex-direction: column;
-            min-height: 100vh;
-            color: #333;
-        }
-        header {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        header h1 {
-            margin: 0; font-weight: 600; font-size: 1.25rem;
-        }
-        nav button {
-            background-color: #2980b9;
-            border: none;
-            color: white;
-            padding: 0.5rem 1rem;
-            margin-left: 0.75rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        nav button:hover, nav button:focus {
-            background-color: #1c5980;
-            outline: none;
-        }
-
-        main {
-            flex: 1;
-            padding: 2rem;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Tabla artículos */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            font-size: 1rem;
-        }
-        th {
-            background-color: #2980b9;
-            color: white;
-            font-weight: 600;
-        }
-        tbody tr:hover {
-            background-color: #f0f8ff;
-        }
-        td.price, th.price {
-            text-align: right;
-            font-feature-settings: "tnum";
-            font-variant-numeric: tabular-nums;
-        }
-        td.units, th.units {
-            text-align: center;
-        }
-
-        /* Total general arriba a la derecha */
-        #totalGeneral {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #2c3e50;
-            text-align: right;
-            margin-bottom: 1.5rem;
-        }
-        /* Formulario */
-        form {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin: 1rem auto 2rem;
-        }
-        form h2 {
-            margin-top: 0;
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-weight: 600;
-            color: #34495e;
-        }
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 0.6rem 0.8rem;
-            border: 1.8px solid #dcdfe6;
-            border-radius: 6px;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            transition: border-color 0.25s;
-        }
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        select:focus {
-            border-color: #2980b9;
-            outline: none;
-        }
-        button[type="submit"] {
-            display: block;
-            width: 100%;
-            background-color: #2980b9;
-            border: none;
-            color: white;
-            padding: 0.75rem 1rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button[type="submit"]:hover {
-            background-color: #1c5980;
-        }
-
-        /* Oculto para las secciones */
-        section {
-            display: none;
-        }
-        section.active {
-            display: block;
-        }
-
-        /* Botón eliminar en catálogo */
-        .btn-delete {
-            padding: 0.3rem 0.6rem;
-            background-color: #e74c3c;
-            border: none;
-            color: white;
-            font-weight: 700;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.25s;
-            font-size: 0.9rem;
-        }
-        .btn-delete:hover {
-            background-color: #c0392b;
-        }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            th, td {
-                padding: 0.75rem 0.8rem;
-                font-size: 0.9rem;
-            }
-            header {
-                padding: 0.8rem 1rem;
-            }
-            main {
-                padding: 1rem;
-            }
-            nav button {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.9rem;
-            }
-            form {
-                margin: 1rem 1rem 2rem;
-                padding: 1.5rem 1rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebApp de Ventas estilo Didi</title>
+<style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 0; padding: 0; }
+    header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    nav button { background: #2980b9; border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+    main { padding: 2rem; max-width: 900px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+    th, td { padding: 1rem; border-bottom: 1px solid #ddd; }
+    th { background: #2980b9; color: white; }
+    td.price, th.price { text-align: right; }
+    td.units, th.units { text-align: center; }
+    #totalGeneral { font-weight: bold; text-align: right; margin: 1rem 0; }
+    form { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    label { font-weight: bold; margin-top: 1rem; display: block; }
+    input, select, button { width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
+    button[type="submit"] { background: #2980b9; color: white; font-weight: bold; border: none; margin-top: 1rem; cursor: pointer; }
+</style>
 </head>
 <body>
 
 <header>
-    <h1>Gestor de Artículos Mejorado</h1>
+    <h1>WebApp de Ventas</h1>
     <nav>
         <button id="btn-list">Lista</button>
         <button id="btn-catalog">Catálogo</button>
@@ -206,236 +33,213 @@
 
 <main>
     <!-- Página Lista -->
-    <section id="page-list" class="active" aria-label="Lista de artículos y totales">
-        <div id="totalGeneral" aria-live="polite" aria-atomic="true">Total general: $0.00</div>
-        <table role="table" aria-describedby="totalGeneral" >
+    <section id="page-list" class="active">
+        <div id="totalGeneral">Total general: $0.00</div>
+        <label for="destino">Dirección de entrega:</label>
+        <input type="text" id="destino" placeholder="Ej: Blvd. Insurgentes 1234, Tijuana">
+        <button id="btn-calcular-envio">Calcular Envío</button>
+
+        <table>
             <thead>
                 <tr>
-                    <th scope="col">Artículo</th>
-                    <th scope="col" class="units">Unidades</th>
-                    <th scope="col" class="price">Precio Total</th>
+                    <th>Artículo</th>
+                    <th class="units">Unidades</th>
+                    <th>Categoría</th>
+                    <th class="price">Precio Total</th>
                 </tr>
             </thead>
-            <tbody id="articulosBody" role="rowgroup">
-                <!-- Filas generadas por JS -->
-            </tbody>
+            <tbody id="articulosBody"></tbody>
         </table>
     </section>
 
-    <!-- Página Catálogo (con listado y formulario) -->
-    <section id="page-catalog" aria-label="Gestor de catálogo de artículos">
-        <form id="formAgregar" novalidate>
+    <!-- Página Catálogo -->
+    <section id="page-catalog" style="display:none;">
+        <form id="formAgregar">
             <h2>Agregar Artículo</h2>
+            <label>Nombre:</label>
+            <input type="text" id="nombreArticulo" required>
 
-            <label for="nombreArticulo">Nombre del artículo</label>
-            <input type="text" id="nombreArticulo" name="nombreArticulo" placeholder="Ej: Manzanas" required autocomplete="off" />
+            <label>Precio (en $):</label>
+            <input type="number" id="precioArticulo" step="0.01" min="0.01" required>
 
-            <label for="precioArticulo">Precio (en $)</label>
-            <input type="number" id="precioArticulo" name="precioArticulo" placeholder="Ej: 10.50" step="0.01" min="0.01" required autocomplete="off" />
-
-            <label for="tipoUnidad">Tipo</label>
-            <select id="tipoUnidad" name="tipoUnidad" required>
+            <label>Tipo:</label>
+            <select id="tipoUnidad" required>
                 <option value="" disabled selected>Seleccione tipo</option>
                 <option value="unidad">Por unidad</option>
                 <option value="paquete">Por paquete</option>
             </select>
 
-            <button type="submit">Agregar al listado</button>
+            <!-- 🆕 CATEGORÍA -->
+            <label>Categoría:</label>
+            <select id="categoriaArticulo" required>
+                <option value="" disabled selected>Seleccione categoría</option>
+                <option value="CERVEZA">Cerveza</option>
+                <option value="LICOR">Licor</option>
+                <option value="COMIDA">Comida</option>
+                <option value="OTROS">Otros</option>
+            </select>
+
+            <button type="submit">Agregar</button>
         </form>
 
-        <h2 style="color:#2c3e50; text-align:center; margin-bottom: 0.75rem;">Artículos registrados</h2>
-        <table aria-label="Lista de artículos registrados para gestión" style="max-width: 700px; margin: 0 auto 3rem;">
+        <table>
             <thead>
                 <tr>
-                    <th scope="col">Artículo</th>
-                    <th scope="col" class="units">Unidades</th>
-                    <th scope="col" class="price">Precio unidad</th>
-                    <th scope="col" class="price">Tipo</th>
-                    <th scope="col" style="width: 90px;">Acciones</th>
+                    <th>Artículo</th>
+                    <th class="units">Unidades</th>
+                    <th>Precio Unidad</th>
+                    <th>Tipo</th>
+                    <th>Categoría</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="catalogBody">
-                <!-- Artículos listados aquí -->
-            </tbody>
+            <tbody id="catalogBody"></tbody>
         </table>
     </section>
 </main>
 
 <script>
 (() => {
-    // Referencias DOM
-    const btnList = document.getElementById('btn-list');
-    const btnCatalog = document.getElementById('btn-catalog');
+    const baseDireccion = "Calle Jacinto 1126, La Morita, 22245 Tijuana, B.C.";
+    const articulosBody = document.getElementById("articulosBody");
+    const catalogBody = document.getElementById("catalogBody");
+    const totalGeneralElem = document.getElementById("totalGeneral");
+    const formAgregar = document.getElementById("formAgregar");
+    const nombreInput = document.getElementById("nombreArticulo");
+    const precioInput = document.getElementById("precioArticulo");
+    const tipoSelect = document.getElementById("tipoUnidad");
+    const categoriaSelect = document.getElementById("categoriaArticulo");
+    const destinoInput = document.getElementById("destino");
 
-    const sectionList = document.getElementById('page-list');
-    const sectionCatalog = document.getElementById('page-catalog');
-
-    const articulosBody = document.getElementById('articulosBody');
-    const catalogBody = document.getElementById('catalogBody');
-    const totalGeneralElem = document.getElementById('totalGeneral');
-
-    const formAgregar = document.getElementById('formAgregar');
-    const nombreInput = document.getElementById('nombreArticulo');
-    const precioInput = document.getElementById('precioArticulo');
-    const tipoUnidadSelect = document.getElementById('tipoUnidad');
-
-    // Datos: Cada artículo con nombre único para simplificar gestión
     let articulos = [
-        { id: 1, nombre: '6 pack Tecate ', unidades: 1, precioUnidad: 100, tipo: 'unidad' },
-        { id: 2, nombre: 'Arroz', unidades: 3, precioUnidad: 10, tipo: 'paquete' }
+        { id: 1, nombre: "6 pack Tecate", unidades: 1, precioUnidad: 100, tipo: "unidad", categoria: "CERVEZA" },
+        { id: 2, nombre: "Arroz", unidades: 3, precioUnidad: 10, tipo: "paquete", categoria: "COMIDA" }
     ];
-    // Control para IDs
     let proximoId = 3;
+    let costoEnvio = 0;
 
-    // Mostrar sección
-    function mostrarSeccion(seccion) {
-        if (seccion === 'list') {
-            sectionList.classList.add('active');
-            sectionCatalog.classList.remove('active');
-        } else {
-            sectionCatalog.classList.add('active');
-            sectionList.classList.remove('active');
-        }
-    }
-
-    // Actualizar lista visual de artículos (página lista)
     function actualizarLista() {
-        articulosBody.innerHTML = '';
+        articulosBody.innerHTML = "";
         let totalGeneral = 0;
-        articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo }) => {
-            const precioTotal = unidades * precioUnidad * 1.4;
+
+        articulos.forEach(({ nombre, unidades, precioUnidad, tipo, categoria }) => {
+            let precioTotal = unidades * precioUnidad;
+            if (categoria === "LICOR" || categoria === "CERVEZA") {
+                precioTotal *= 1.4; // aplica 40%
+            }
+
             totalGeneral += precioTotal;
 
-            const fila = document.createElement('tr');
-
-            const celdaNombre = document.createElement('td');
-            celdaNombre.textContent = nombre + (tipo === 'paquete' ? ' (Paquete)' : '');
-            fila.appendChild(celdaNombre);
-
-            const celdaUnidades = document.createElement('td');
-            celdaUnidades.textContent = unidades;
-            celdaUnidades.className = 'units';
-            fila.appendChild(celdaUnidades);
-
-            const celdaPrecio = document.createElement('td');
-            celdaPrecio.textContent = `$${precioTotal.toFixed(2)}`;
-            celdaPrecio.className = 'price';
-            fila.appendChild(celdaPrecio);
-
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td>${nombre}</td>
+                <td class="units">${unidades}</td>
+                <td>${categoria}</td>
+                <td class="price">$${precioTotal.toFixed(2)}</td>
+            `;
             articulosBody.appendChild(fila);
         });
-        totalGeneralElem.textContent = `Total general: $${totalGeneral.toFixed(2)}`;
+
+        totalGeneral += costoEnvio; // incluye envío
+        totalGeneralElem.textContent = `Total general: $${totalGeneral.toFixed(2)} (incluye envío $${costoEnvio.toFixed(2)})`;
     }
 
-    // Actualizar listado del catálogo (página catálogo, listado con botones eliminar)
     function actualizarCatalogo() {
-        catalogBody.innerHTML = '';
-        articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo }) => {
-            const fila = document.createElement('tr');
-
-            const celdaNombre = document.createElement('td');
-            celdaNombre.textContent = nombre;
-            fila.appendChild(celdaNombre);
-
-            const celdaUnidades = document.createElement('td');
-            celdaUnidades.textContent = unidades;
-            celdaUnidades.className = 'units';
-            fila.appendChild(celdaUnidades);
-
-            const celdaPrecioUnidad = document.createElement('td');
-            celdaPrecioUnidad.textContent = `$${precioUnidad.toFixed(2)}`;
-            celdaPrecioUnidad.className = 'price';
-            fila.appendChild(celdaPrecioUnidad);
-
-            const celdaTipo = document.createElement('td');
-            celdaTipo.textContent = tipo === 'paquete' ? 'Paquete' : 'Unidad';
-            celdaTipo.className = 'price';
-            fila.appendChild(celdaTipo);
-
-            const celdaAcciones = document.createElement('td');
-            celdaAcciones.style.textAlign = 'center';
-            const btnEliminar = document.createElement('button');
-            btnEliminar.type = 'button';
-            btnEliminar.textContent = 'Eliminar';
-            btnEliminar.className = 'btn-delete';
-            btnEliminar.setAttribute('aria-label', `Eliminar artículo ${nombre}`);
-            btnEliminar.addEventListener('click', () => eliminarArticulo(id));
-            celdaAcciones.appendChild(btnEliminar);
-
-            fila.appendChild(celdaAcciones);
-
+        catalogBody.innerHTML = "";
+        articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo, categoria }) => {
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td>${nombre}</td>
+                <td class="units">${unidades}</td>
+                <td>$${precioUnidad.toFixed(2)}</td>
+                <td>${tipo}</td>
+                <td>${categoria}</td>
+                <td><button onclick="eliminarArticulo(${id})">Eliminar</button></td>
+            `;
             catalogBody.appendChild(fila);
         });
     }
 
-    function eliminarArticulo(id) {
-        if(confirm('¿Seguro que desea eliminar este artículo?')) {
-            articulos = articulos.filter(a => a.id !== id);
-            actualizarCatalogo();
-            actualizarLista();
-        }
-    }
+    // eliminar global
+    window.eliminarArticulo = (id) => {
+        articulos = articulos.filter(a => a.id !== id);
+        actualizarLista();
+        actualizarCatalogo();
+    };
 
-    // Validación y agregar artículo
-    formAgregar.addEventListener('submit', (e) => {
+    formAgregar.addEventListener("submit", (e) => {
         e.preventDefault();
-
         const nombre = nombreInput.value.trim();
         const precio = parseFloat(precioInput.value);
-        const tipo = tipoUnidadSelect.value;
+        const tipo = tipoSelect.value;
+        const categoria = categoriaSelect.value;
 
-        // Validaciones
-        if(!nombre) {
-            alert('Por favor ingrese el nombre del artículo.');
-            nombreInput.focus();
-            return;
-        }
-        if(isNaN(precio) || precio <= 0) {
-            alert('Por favor ingrese un precio válido mayor que 0.');
-            precioInput.focus();
-            return;
-        }
-        if(tipo !== 'unidad' && tipo !== 'paquete') {
-            alert('Seleccione el tipo de artículo.');
-            tipoUnidadSelect.focus();
+        if (!nombre || !precio || !tipo || !categoria) {
+            alert("Por favor, completa todos los campos.");
             return;
         }
 
-        // Evitar agregar con nombre repetido (opcional)
-        const nombreMinuscula = nombre.toLowerCase();
-        if(articulos.some(a => a.nombre.toLowerCase() === nombreMinuscula)) {
-            if(!confirm(`El artículo "${nombre}" ya existe. ¿Quieres agregarlo igual?`)) {
-                nombreInput.focus();
-                return;
-            }
-        }
-
-        // Agregamos artículo con unidades = 1
         articulos.push({
             id: proximoId++,
             nombre,
             unidades: 1,
             precioUnidad: precio,
-            tipo
+            tipo,
+            categoria
         });
 
-        // Limpiar y enfocar form
         formAgregar.reset();
-        nombreInput.focus();
-
-        // Actualizar ambas vistas
-        actualizarCatalogo();
         actualizarLista();
-
-        // Volver a página lista para ver resultados
-        mostrarSeccion('list');
+        actualizarCatalogo();
+        document.getElementById("page-catalog").style.display = "none";
+        document.getElementById("page-list").style.display = "block";
     });
 
-    // Botones navegación
-    btnList.addEventListener('click', () => mostrarSeccion('list'));
-    btnCatalog.addEventListener('click', () => mostrarSeccion('catalog'));
+    // Cálculo de distancia con Google Maps API (reemplaza "TU_API_KEY_AQUI")
+    async function calcularDistancia(origen, destino) {
+        const key = "TU_API_KEY_AQUI";
+        const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origen)}&destinations=${encodeURIComponent(destino)}&key=${key}&mode=driving`;
 
-    // Inicialización
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+        const data = JSON.parse((await res.json()).contents);
+
+        if (data.rows[0].elements[0].status === "OK") {
+            const metros = data.rows[0].elements[0].distance.value;
+            return metros / 1000; // kilómetros
+        } else {
+            throw new Error("No se pudo calcular la distancia");
+        }
+    }
+
+    document.getElementById("btn-calcular-envio").addEventListener("click", async () => {
+        const destino = destinoInput.value.trim();
+        if (!destino) {
+            alert("Por favor, ingresa una dirección de destino.");
+            return;
+        }
+
+        totalGeneralElem.textContent = "Calculando envío...";
+        try {
+            const km = await calcularDistancia(baseDireccion, destino);
+            costoEnvio = km * 20;
+            actualizarLista();
+            alert(`Distancia: ${km.toFixed(1)} km\nCosto de envío: $${costoEnvio.toFixed(2)}`);
+        } catch (err) {
+            totalGeneralElem.textContent = "Error al calcular distancia.";
+            console.error(err);
+            alert("No se pudo calcular la distancia. Verifica tu dirección o API Key.");
+        }
+    });
+
+    document.getElementById("btn-list").addEventListener("click", () => {
+        document.getElementById("page-list").style.display = "block";
+        document.getElementById("page-catalog").style.display = "none";
+    });
+    document.getElementById("btn-catalog").addEventListener("click", () => {
+        document.getElementById("page-list").style.display = "none";
+        document.getElementById("page-catalog").style.display = "block";
+    });
+
     actualizarLista();
     actualizarCatalogo();
 })();
