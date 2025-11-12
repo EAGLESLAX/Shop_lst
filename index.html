@@ -1,99 +1,160 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa sin API Key (Leaflet + OpenStreetMap)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcular Distancia sin API Key</title>
 
-  <!-- Librerías de Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Leaflet para mapa -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+  }
 
-    #map {
-      height: 500px;
-      width: 100%;
-      max-width: 900px;
-      margin: auto;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
+  #map {
+    height: 450px;
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
 
-    input {
-      width: 300px;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
+  input {
+    width: 350px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
 
-    button {
-      padding: 10px 15px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+  button {
+    padding: 10px 20px;
+    background: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
 
-    button:hover {
-      background-color: #218838;
-    }
+  button:hover {
+    background: #1f6391;
+  }
 
-    .controls {
-      margin-bottom: 20px;
-    }
-  </style>
+  #info {
+    font-size: 18px;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+</style>
 </head>
 <body>
-  <h2>Buscador de lugares (OpenStreetMap)</h2>
+  <h2>📍 Calcular distancia entre direcciones (sin API Key)</h2>
+  <p>Origen fijo: <b>Calle Jacinto 1126, La Morita, Tijuana</b></p>
 
-  <div class="controls">
-    <input type="text" id="direccion" placeholder="Ingresa una dirección o ciudad">
-    <button onclick="buscarDireccion()">Buscar</button>
-  </div>
+  <input type="text" id="destino" placeholder="Ingresa dirección destino (ej. Plaza Río, Tijuana)">
+  <button onclick="calcularDistancia()">Calcular</button>
 
   <div id="map"></div>
+  <div id="info"></div>
 
-  <script>
-    // Mapa inicial (CDMX)
-    const map = L.map('map').setView([19.4326, -99.1332], 12);
+<script>
+// Coordenadas del origen (Jacinto 1126, Tijuana)
+const origenFijo = {
+  nombre: "Calle Jacinto 1126, La Morita, Tijuana",
+  lat: 32.462227,
+  lon: -116.880843
+};
 
-    // Capa base de OpenStreetMap (sin clave)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+// Inicializa el mapa
+const map = L.map('map').setView([origenFijo.lat, origenFijo.lon], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-    let marker = L.marker([19.4326, -99.1332]).addTo(map);
+// Marcador de origen
+const markerOrigen = L.marker([origenFijo.lat, origenFijo.lon])
+  .addTo(map)
+  .bindPopup(`<b>Origen:</b><br>${origenFijo.nombre}`)
+  .openPopup();
 
-    // Función para buscar dirección usando Nominatim (gratuito)
-    async function buscarDireccion() {
-      const direccion = document.getElementById("direccion").value;
-      if (!direccion) {
-        alert("Por favor ingresa una dirección o ciudad");
-        return;
-      }
+let markerDestino = null;
+let linea = null;
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
-      const respuesta = await fetch(url);
-      const datos = await respuesta.json();
+// Función para obtener coordenadas desde dirección
+async function geocodificarDireccion(direccion) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (data.length > 0) {
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), nombre: data[0].display_name };
+  } else {
+    throw new Error("No se encontró la dirección destino.");
+  }
+}
 
-      if (datos.length > 0) {
-        const { lat, lon, display_name } = datos[0];
-        map.setView([lat, lon], 14);
-        marker.setLatLng([lat, lon]).bindPopup(`<b>${display_name}</b>`).openPopup();
-      } else {
-        alert("No se encontró la dirección.");
-      }
-    }
-  </script>
+// Función Haversine (calcula distancia entre dos coordenadas)
+function calcularKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // radio de la Tierra en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // distancia en km
+}
+
+// Acción principal
+async function calcularDistancia() {
+  const destinoTexto = document.getElementById("destino").value.trim();
+  const infoElem = document.getElementById("info");
+
+  if (!destinoTexto) {
+    alert("Por favor ingresa una dirección de destino.");
+    return;
+  }
+
+  infoElem.textContent = "Calculando distancia...";
+  try {
+    const destino = await geocodificarDireccion(destinoTexto);
+    
+    const km = calcularKm(origenFijo.lat, origenFijo.lon, destino.lat, destino.lon);
+
+    // Limpia marcador anterior
+    if (markerDestino) map.removeLayer(markerDestino);
+    if (linea) map.removeLayer(linea);
+
+    // Agrega marcador destino
+    markerDestino = L.marker([destino.lat, destino.lon])
+      .addTo(map)
+      .bindPopup(`<b>Destino:</b><br>${destino.nombre}`)
+      .openPopup();
+
+    // Dibuja línea entre origen y destino
+    linea = L.polyline(
+      [[origenFijo.lat, origenFijo.lon], [destino.lat, destino.lon]],
+      { color: 'red', weight: 3 }
+    ).addTo(map);
+
+    // Ajusta vista del mapa
+    map.fitBounds(linea.getBounds());
+
+    infoElem.innerHTML = `🚗 Distancia aproximada: <b>${km.toFixed(2)} km</b>`;
+  } catch (err) {
+    console.error(err);
+    infoElem.textContent = "❌ No se pudo calcular la distancia.";
+  }
+}
+</script>
 </body>
 </html>
