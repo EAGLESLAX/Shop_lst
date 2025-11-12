@@ -1,294 +1,115 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WebApp de Ventas estilo Didi</title>
-<style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 0; padding: 0; }
-    header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-    nav button { background: #2980b9; border: none; color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
-    main { padding: 2rem; max-width: 900px; margin: 0 auto; }
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-    th, td { padding: 1rem; border-bottom: 1px solid #ddd; }
-    th { background: #2980b9; color: white; }
-    td.price, th.price { text-align: right; }
-    td.units, th.units { text-align: center; }
-    #totalGeneral { font-weight: bold; text-align: right; margin: 1rem 0; }
-    form { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-    label { font-weight: bold; margin-top: 1rem; display: block; }
-    input, select, button { width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
-    button[type="submit"] { background: #2980b9; color: white; font-weight: bold; border: none; margin-top: 1rem; cursor: pointer; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa con Google Maps API</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+      max-width: 900px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      width: 300px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #3367D6;
+    }
+  </style>
 </head>
 <body>
+  <h2>Buscador con Google Maps</h2>
+  <div class="controls">
+    <input type="text" id="direccion" placeholder="Ingresa una dirección o lugar">
+    <button onclick="buscarDireccion()">Buscar</button>
+  </div>
+  <div id="map"></div>
 
-<header>
-    <h1>WebApp de Ventas</h1>
-    <nav>
-        <button id="btn-list">Lista</button>
-        <button id="btn-catalog">Catálogo</button>
-    </nav>
-</header>
+  <script>
+    let map;
+    let geocoder;
+    let marker;
 
-<main>
-    <!-- Página Lista -->
-    <section id="page-list" class="active">
-        <div id="totalGeneral">Total general: $0.00</div>
-        <label for="destino">Dirección de entrega:</label>
-        <input type="text" id="destino" placeholder="Ej: Blvd. Insurgentes 1234, Tijuana">
-        <button id="btn-calcular-envio">Calcular Envío</button>
+    function initMap() {
+      const posicionInicial = { lat: 19.4326, lng: -99.1332 }; // CDMX
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Artículo</th>
-                    <th class="units">Unidades</th>
-                    <th>Categoría</th>
-                    <th class="price">Precio Total</th>
-                </tr>
-            </thead>
-            <tbody id="articulosBody"></tbody>
-        </table>
-    </section>
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: posicionInicial,
+      });
 
-    <!-- Página Catálogo -->
-    <section id="page-catalog" style="display:none;">
-        <form id="formAgregar">
-            <h2>Agregar Artículo</h2>
-            <label>Nombre:</label>
-            <input type="text" id="nombreArticulo" required>
-
-            <label>Precio (en $):</label>
-            <input type="number" id="precioArticulo" step="0.01" min="0.01" required>
-
-            <label>Tipo:</label>
-            <select id="tipoUnidad" required>
-                <option value="" disabled selected>Seleccione tipo</option>
-                <option value="unidad">Por unidad</option>
-                <option value="paquete">Por paquete</option>
-            </select>
-
-            <!-- 🆕 CATEGORÍA -->
-            <label>Categoría:</label>
-            <select id="categoriaArticulo" required>
-                <option value="" disabled selected>Seleccione categoría</option>
-                <option value="CERVEZA">Cerveza</option>
-                <option value="LICOR">Licor</option>
-                <option value="COMIDA">Comida</option>
-                <option value="OTROS">Otros</option>
-            </select>
-
-            <button type="submit">Agregar</button>
-        </form>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Artículo</th>
-                    <th class="units">Unidades</th>
-                    <th>Precio Unidad</th>
-                    <th>Tipo</th>
-                    <th>Categoría</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="catalogBody"></tbody>
-        </table>
-    </section>
-</main>
-
-<script>
-(() => {
-    // Dirección base (puedes cambiarla si hace falta)
-    const baseDireccion = "Calle Jacinto 1126, La Morita, 22245 Tijuana, B.C.";
-    const articulosBody = document.getElementById("articulosBody");
-    const catalogBody = document.getElementById("catalogBody");
-    const totalGeneralElem = document.getElementById("totalGeneral");
-    const formAgregar = document.getElementById("formAgregar");
-    const nombreInput = document.getElementById("nombreArticulo");
-    const precioInput = document.getElementById("precioArticulo");
-    const tipoSelect = document.getElementById("tipoUnidad");
-    const categoriaSelect = document.getElementById("categoriaArticulo");
-    const destinoInput = document.getElementById("destino");
-
-    let articulos = [
-        { id: 1, nombre: "6 pack Tecate", unidades: 1, precioUnidad: 100, tipo: "unidad", categoria: "CERVEZA" },
-        { id: 2, nombre: "Arroz", unidades: 3, precioUnidad: 10, tipo: "paquete", categoria: "COMIDA" }
-    ];
-    let proximoId = 3;
-    let costoEnvio = 0;
-
-    // --- Actualizaciones de UI ---
-    function actualizarLista() {
-        articulosBody.innerHTML = "";
-        let totalGeneral = 0;
-
-        articulos.forEach(({ nombre, unidades, precioUnidad, tipo, categoria }) => {
-            let precioTotal = unidades * precioUnidad;
-            if (categoria === "LICOR" || categoria === "CERVEZA") {
-                precioTotal *= 1.4; // aplica 40%
-            }
-
-            totalGeneral += precioTotal;
-
-            const fila = document.createElement("tr");
-            fila.innerHTML = `
-                <td>${nombre}</td>
-                <td class="units">${unidades}</td>
-                <td>${categoria}</td>
-                <td class="price">$${precioTotal.toFixed(2)}</td>
-            `;
-            articulosBody.appendChild(fila);
-        });
-
-        totalGeneral += costoEnvio; // incluye envío
-        totalGeneralElem.textContent = `Total general: $${totalGeneral.toFixed(2)} (incluye envío $${costoEnvio.toFixed(2)})`;
+      geocoder = new google.maps.Geocoder();
+      marker = new google.maps.Marker({
+        position: posicionInicial,
+        map: map,
+        title: "Ubicación inicial",
+      });
     }
 
-    function actualizarCatalogo() {
-        catalogBody.innerHTML = "";
-        articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo, categoria }) => {
-            const fila = document.createElement("tr");
-            fila.innerHTML = `
-                <td>${nombre}</td>
-                <td class="units">${unidades}</td>
-                <td>$${precioUnidad.toFixed(2)}</td>
-                <td>${tipo}</td>
-                <td>${categoria}</td>
-                <td><button onclick="eliminarArticulo(${id})">Eliminar</button></td>
-            `;
-            catalogBody.appendChild(fila);
-        });
-    }
+    function buscarDireccion() {
+      const direccion = document.getElementById("direccion").value;
 
-    // eliminar global
-    window.eliminarArticulo = (id) => {
-        articulos = articulos.filter(a => a.id !== id);
-        actualizarLista();
-        actualizarCatalogo();
-    };
+      if (!direccion) {
+        alert("Por favor ingresa una dirección o nombre de lugar");
+        return;
+      }
 
-    formAgregar.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const nombre = nombreInput.value.trim();
-        const precio = parseFloat(precioInput.value);
-        const tipo = tipoSelect.value;
-        const categoria = categoriaSelect.value;
-
-        if (!nombre || !precio || !tipo || !categoria) {
-            alert("Por favor, completa todos los campos.");
-            return;
+      geocoder.geocode({ address: direccion }, (results, status) => {
+        if (status === "OK") {
+          map.setCenter(results[0].geometry.location);
+          marker.setPosition(results[0].geometry.location);
+          marker.setTitle(results[0].formatted_address);
+        } else {
+          alert("No se pudo encontrar la dirección: " + status);
         }
-
-        articulos.push({
-            id: proximoId++,
-            nombre,
-            unidades: 1,
-            precioUnidad: precio,
-            tipo,
-            categoria
-        });
-
-        formAgregar.reset();
-        actualizarLista();
-        actualizarCatalogo();
-        document.getElementById("page-catalog").style.display = "none";
-        document.getElementById("page-list").style.display = "block";
-    });
-
-    // ---------------------------
-    // Geocodificación y distancia
-    // ---------------------------
-
-    // Cache para la geocodificación de la dirección base (evita repetir)
-    let cacheBaseCoords = null;
-
-    // Llamada a Nominatim (OpenStreetMap) para obtener lat/lon de una dirección (sin API key)
-    async function geocodeNominatim(address) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-        const res = await fetch(url, {
-            headers: {
-                // Nominatim pide identificar el "User-Agent"/"Referer" idealmente.
-                // En navegador no se puede cambiar el User-Agent, pero el Referer será tu dominio.
-                'Accept-Language': 'es'
-            }
-        });
-        if (!res.ok) throw new Error("Error en geocoding");
-        const json = await res.json();
-        if (!json || json.length === 0) throw new Error("No se encontró la dirección");
-        // toma el primer resultado
-        const { lat, lon } = json[0];
-        return { lat: parseFloat(lat), lon: parseFloat(lon) };
+      });
     }
+  </script>
 
-    // Haversine: distancia en kilómetros entre 2 coordenadas
-    function haversineKm(a, b) {
-        const toRad = v => v * Math.PI / 180;
-        const R = 6371; // km radio tierra
-        const dLat = toRad(b.lat - a.lat);
-        const dLon = toRad(b.lon - a.lon);
-        const lat1 = toRad(a.lat);
-        const lat2 = toRad(b.lat);
-
-        const sinDLat = Math.sin(dLat/2);
-        const sinDLon = Math.sin(dLon/2);
-        const aa = sinDLat*sinDLat + sinDLon*sinDLon * Math.cos(lat1) * Math.cos(lat2);
-        const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1-aa));
-        return R * c;
-    }
-
-    // Calcula distancia (km) entre baseDireccion y destino.
-    // Primero intenta geocodificar con Nominatim; si falla, lanza error.
-    async function calcularDistancia(origen, destino) {
-        try {
-            // geocode base (cached)
-            if (!cacheBaseCoords) {
-                cacheBaseCoords = await geocodeNominatim(origen);
-            }
-            const destCoords = await geocodeNominatim(destino);
-            const km = haversineKm(cacheBaseCoords, destCoords);
-            return km;
-        } catch (err) {
-            // re-lanza para que el llamador maneje el error
-            throw err;
-        }
-    }
-
-    document.getElementById("btn-calcular-envio").addEventListener("click", async () => {
-        const destino = destinoInput.value.trim();
-        if (!destino) {
-            alert("Por favor, ingresa una dirección de destino.");
-            return;
-        }
-
-        totalGeneralElem.textContent = "Calculando envío...";
-        try {
-            const km = await calcularDistancia(baseDireccion, destino);
-            // tarifa por km (puedes ajustar)
-            costoEnvio = km * 20;
-            actualizarLista();
-            alert(`Distancia aproximada: ${km.toFixed(2)} km\nCosto de envío: $${costoEnvio.toFixed(2)}`);
-        } catch (err) {
-            totalGeneralElem.textContent = "Error al calcular distancia.";
-            console.error(err);
-            alert("No se pudo calcular la distancia. Verifica tu dirección o intenta otra dirección. (" + err.message + ")");
-        }
-    });
-
-    // Navegación de páginas
-    document.getElementById("btn-list").addEventListener("click", () => {
-        document.getElementById("page-list").style.display = "block";
-        document.getElementById("page-catalog").style.display = "none";
-    });
-    document.getElementById("btn-catalog").addEventListener("click", () => {
-        document.getElementById("page-list").style.display = "none";
-        document.getElementById("page-catalog").style.display = "block";
-    });
-
-    actualizarLista();
-    actualizarCatalogo();
-})();
-</script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAABdjfW5q8p3ZImnEbLP5gtaBRcw-q_lc&callback=initMap">
+  </script>
 </body>
 </html>
