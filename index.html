@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calcular Distancia sin API Key</title>
+<title>Distancia por ruta real sin API Key</title>
 
-<!-- Leaflet para mapa -->
+<!-- Librería de mapas Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -17,7 +17,6 @@
     margin: 0;
     padding: 20px;
   }
-
   #map {
     height: 450px;
     width: 100%;
@@ -26,7 +25,6 @@
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-
   input {
     width: 350px;
     padding: 10px;
@@ -34,7 +32,6 @@
     border-radius: 6px;
     border: 1px solid #ccc;
   }
-
   button {
     padding: 10px 20px;
     background: #2980b9;
@@ -44,11 +41,9 @@
     cursor: pointer;
     font-weight: bold;
   }
-
   button:hover {
     background: #1f6391;
   }
-
   #info {
     font-size: 18px;
     margin-top: 20px;
@@ -57,17 +52,17 @@
 </style>
 </head>
 <body>
-  <h2>📍 Calcular distancia entre direcciones (sin API Key)</h2>
+  <h2>🚗 Distancia de conducción real (sin Google)</h2>
   <p>Origen fijo: <b>Calle Jacinto 1126, La Morita, Tijuana</b></p>
 
   <input type="text" id="destino" placeholder="Ingresa dirección destino (ej. Plaza Río, Tijuana)">
-  <button onclick="calcularDistancia()">Calcular</button>
+  <button onclick="calcularRuta()">Calcular Ruta</button>
 
   <div id="map"></div>
   <div id="info"></div>
 
 <script>
-// Coordenadas del origen (Jacinto 1126, Tijuana)
+// Coordenadas del origen (Calle Jacinto 1126, La Morita, Tijuana)
 const origenFijo = {
   nombre: "Calle Jacinto 1126, La Morita, Tijuana",
   lat: 32.462227,
@@ -80,16 +75,16 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Marcador de origen
-const markerOrigen = L.marker([origenFijo.lat, origenFijo.lon])
+// Marcador del origen
+L.marker([origenFijo.lat, origenFijo.lon])
   .addTo(map)
   .bindPopup(`<b>Origen:</b><br>${origenFijo.nombre}`)
   .openPopup();
 
 let markerDestino = null;
-let linea = null;
+let rutaLayer = null;
 
-// Función para obtener coordenadas desde dirección
+// Función: convertir dirección a coordenadas (geocodificación)
 async function geocodificarDireccion(direccion) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
   const resp = await fetch(url);
@@ -101,21 +96,26 @@ async function geocodificarDireccion(direccion) {
   }
 }
 
-// Función Haversine (calcula distancia entre dos coordenadas)
-function calcularKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; // radio de la Tierra en km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // distancia en km
+// Función: obtener ruta de conducción real usando OSRM
+async function obtenerRuta(origen, destino) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${origen.lon},${origen.lat};${destino.lon},${destino.lat}?overview=full&geometries=geojson`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+
+  if (data.code === "Ok") {
+    const ruta = data.routes[0];
+    return {
+      distanciaKm: ruta.distance / 1000,
+      duracionMin: ruta.duration / 60,
+      geometry: ruta.geometry
+    };
+  } else {
+    throw new Error("No se pudo calcular la ruta.");
+  }
 }
 
 // Acción principal
-async function calcularDistancia() {
+async function calcularRuta() {
   const destinoTexto = document.getElementById("destino").value.trim();
   const infoElem = document.getElementById("info");
 
@@ -124,35 +124,37 @@ async function calcularDistancia() {
     return;
   }
 
-  infoElem.textContent = "Calculando distancia...";
+  infoElem.textContent = "Calculando ruta...";
   try {
+    // Geocodificar dirección destino
     const destino = await geocodificarDireccion(destinoTexto);
-    
-    const km = calcularKm(origenFijo.lat, origenFijo.lon, destino.lat, destino.lon);
 
-    // Limpia marcador anterior
+    // Obtener ruta real
+    const ruta = await obtenerRuta(origenFijo, destino);
+
+    // Eliminar ruta anterior si existe
     if (markerDestino) map.removeLayer(markerDestino);
-    if (linea) map.removeLayer(linea);
+    if (rutaLayer) map.removeLayer(rutaLayer);
 
-    // Agrega marcador destino
+    // Marcar destino
     markerDestino = L.marker([destino.lat, destino.lon])
       .addTo(map)
       .bindPopup(`<b>Destino:</b><br>${destino.nombre}`)
       .openPopup();
 
-    // Dibuja línea entre origen y destino
-    linea = L.polyline(
-      [[origenFijo.lat, origenFijo.lon], [destino.lat, destino.lon]],
-      { color: 'red', weight: 3 }
-    ).addTo(map);
+    // Dibujar la línea de la ruta en el mapa
+    rutaLayer = L.geoJSON(ruta.geometry, { color: 'red', weight: 4 }).addTo(map);
 
-    // Ajusta vista del mapa
-    map.fitBounds(linea.getBounds());
+    // Ajustar el zoom para ver toda la ruta
+    map.fitBounds(rutaLayer.getBounds());
 
-    infoElem.innerHTML = `🚗 Distancia aproximada: <b>${km.toFixed(2)} km</b>`;
+    infoElem.innerHTML = `
+      🚘 <b>Distancia recorrida:</b> ${ruta.distanciaKm.toFixed(2)} km<br>
+      ⏱️ <b>Duración estimada:</b> ${ruta.duracionMin.toFixed(1)} minutos
+    `;
   } catch (err) {
     console.error(err);
-    infoElem.textContent = "❌ No se pudo calcular la distancia.";
+    infoElem.textContent = "❌ No se pudo calcular la ruta.";
   }
 }
 </script>
