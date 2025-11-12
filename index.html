@@ -281,7 +281,7 @@
 
     // Datos: Cada artículo con nombre único para simplificar gestión
     let articulos = [
-        { id: 1, nombre: 'Manzanas', unidades: 12, precioUnidad: 1.50, tipo: 'unidad' },
+        { id: 1, nombre: '6 pack Tecate ', unidades: 1, precioUnidad: 100, tipo: 'unidad' },
         { id: 2, nombre: 'Arroz', unidades: 3, precioUnidad: 10, tipo: 'paquete' }
     ];
     // Control para IDs
@@ -303,7 +303,7 @@
         articulosBody.innerHTML = '';
         let totalGeneral = 0;
         articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo }) => {
-            const precioTotal = unidades * precioUnidad;
+            const precioTotal = unidades * precioUnidad * 0.4;
             totalGeneral += precioTotal;
 
             const fila = document.createElement('tr');
