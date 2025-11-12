@@ -3,36 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa con Google Maps API</title>
+  <title>Mapa sin API Key (Leaflet + OpenStreetMap)</title>
+
+  <!-- Librerías de Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
       background: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
+      margin: 0;
       padding: 20px;
-    }
-
-    h2 {
-      color: #333;
-      margin-bottom: 10px;
     }
 
     #map {
       height: 500px;
       width: 100%;
       max-width: 900px;
+      margin: auto;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .controls {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
     }
 
     input {
@@ -45,71 +37,63 @@
 
     button {
       padding: 10px 15px;
-      background-color: #4285F4;
+      background-color: #28a745;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 16px;
-      transition: 0.2s;
     }
 
     button:hover {
-      background-color: #3367D6;
+      background-color: #218838;
+    }
+
+    .controls {
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <h2>Buscador con Google Maps</h2>
+  <h2>Buscador de lugares (OpenStreetMap)</h2>
+
   <div class="controls">
-    <input type="text" id="direccion" placeholder="Ingresa una dirección o lugar">
+    <input type="text" id="direccion" placeholder="Ingresa una dirección o ciudad">
     <button onclick="buscarDireccion()">Buscar</button>
   </div>
+
   <div id="map"></div>
 
   <script>
-    let map;
-    let geocoder;
-    let marker;
+    // Mapa inicial (CDMX)
+    const map = L.map('map').setView([19.4326, -99.1332], 12);
 
-    function initMap() {
-      const posicionInicial = { lat: 19.4326, lng: -99.1332 }; // CDMX
+    // Capa base de OpenStreetMap (sin clave)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-      map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: posicionInicial,
-      });
+    let marker = L.marker([19.4326, -99.1332]).addTo(map);
 
-      geocoder = new google.maps.Geocoder();
-      marker = new google.maps.Marker({
-        position: posicionInicial,
-        map: map,
-        title: "Ubicación inicial",
-      });
-    }
-
-    function buscarDireccion() {
+    // Función para buscar dirección usando Nominatim (gratuito)
+    async function buscarDireccion() {
       const direccion = document.getElementById("direccion").value;
-
       if (!direccion) {
-        alert("Por favor ingresa una dirección o nombre de lugar");
+        alert("Por favor ingresa una dirección o ciudad");
         return;
       }
 
-      geocoder.geocode({ address: direccion }, (results, status) => {
-        if (status === "OK") {
-          map.setCenter(results[0].geometry.location);
-          marker.setPosition(results[0].geometry.location);
-          marker.setTitle(results[0].formatted_address);
-        } else {
-          alert("No se pudo encontrar la dirección: " + status);
-        }
-      });
-    }
-  </script>
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
+      const respuesta = await fetch(url);
+      const datos = await respuesta.json();
 
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAABdjfW5q8p3ZImnEbLP5gtaBRcw-q_lc&callback=initMap">
+      if (datos.length > 0) {
+        const { lat, lon, display_name } = datos[0];
+        map.setView([lat, lon], 14);
+        marker.setLatLng([lat, lon]).bindPopup(`<b>${display_name}</b>`).openPopup();
+      } else {
+        alert("No se encontró la dirección.");
+      }
+    }
   </script>
 </body>
 </html>
