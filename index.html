@@ -3,93 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ruta sin API - OpenStreetMap</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+<title>Lista de artículos</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f5f7fa; }
-  header { background: #2c3e50; color: #fff; padding: 1rem; text-align: center; }
-  #map { height: 400px; margin: 20px auto; max-width: 900px; border-radius: 8px; }
-  #panel { max-width: 900px; margin: 0 auto; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-  input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
-  button { background: #2980b9; color: #fff; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; }
-  #info { font-weight: bold; margin-top: 1rem; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 0; padding: 2rem; }
+    main { max-width: 900px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-top: 1rem; }
+    th, td { padding: 1rem; border-bottom: 1px solid #ddd; }
+    th { background: #2980b9; color: white; }
+    td.price, th.price { text-align: right; }
+    td.units, th.units { text-align: center; }
+    #totalGeneral { font-weight: bold; text-align: right; margin-top: 1rem; }
+    form { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    label { font-weight: bold; margin-top: 1rem; display: block; }
+    input, select, button { width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
+    button[type="submit"] { background: #2980b9; color: white; font-weight: bold; border: none; margin-top: 1rem; cursor: pointer; }
+    .km-box, .checkbox-box { margin-top: 1rem; text-align: right; }
+
+    /* === NUEVO: estilo para que el checkbox quede al lado === */
+    .checkbox-box {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    .checkbox-box label {
+        font-weight: bold;
+        margin: 0;
+    }
+    .checkbox-box input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .km-box label { display: inline-block; font-weight: bold; margin-right: 10px; }
+    .km-box input { width: 120px; display: inline-block; text-align: right; }
+    .btn-eliminar { background: #e74c3c; color: white; border: none; border-radius: 5px; padding: 6px 10px; cursor: pointer; font-size: 0.9rem; }
+    .btn-eliminar:hover { background: #c0392b; }
+    .input-unidades { width: 60px; text-align: center; border-radius: 5px; border: 1px solid #ccc; padding: 4px; }
 </style>
 </head>
 <body>
 
-<header><h1>Ruta desde La Morita (sin API)</h1></header>
+<main>
+    <!-- Controles -->
+    <div class="checkbox-box">
+        <label for="checkExtra">Venta Nocturna (Cerveza/Licor)</label>
+        <input type="checkbox" id="checkExtra" checked>
+    </div>
 
-<div id="panel">
-  <label>Destino:</label>
-  <input type="text" id="destino" placeholder="Ej: Plaza Río, Blvd Insurgentes...">
-  <button id="btnRuta">Calcular ruta</button>
-  <div id="info">Distancia: —</div>
-</div>
+    <div class="km-box">
+        <label for="inputKM">Distancia Aprox Destino (KM):</label>
+        <input type="number" id="inputKM" min="0" step="0.1" value="0">
+    </div>
 
-<div id="map"></div>
+    <!-- Tabla principal -->
+    <div id="totalGeneral">Total general: $0.00</div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <table>
+        <thead>
+            <tr>
+                <th>Artículo</th>
+                <th class="units">Unidades</th>
+                <th>Categoría</th>
+                <th class="price">Precio Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="articulosBody"></tbody>
+    </table>
+
+    <!-- Formulario -->
+    <form id="formAgregar">
+        <h2>Agregar Artículo</h2>
+
+        <label>Nombre:</label>
+        <input type="text" id="nombreArticulo" required>
+
+        <label>Precio (en $):</label>
+        <input type="number" id="precioArticulo" step="0.01" min="0.01" required>
+
+        <label>Tipo:</label>
+        <select id="tipoUnidad" required>
+            <option value="" disabled selected>Seleccione tipo</option>
+            <option value="unidad">Por unidad</option>
+            <option value="paquete">Por paquete</option>
+        </select>
+
+        <label>Categoría:</label>
+        <select id="categoriaArticulo" required>
+            <option value="" disabled selected>Seleccione categoría</option>
+            <option value="CERVEZA">Cerveza</option>
+            <option value="LICOR">Licor</option>
+            <option value="COMIDA">Comida</option>
+            <option value="OTROS">Otros</option>
+        </select>
+
+        <button type="submit">Agregar</button>
+    </form>
+</main>
+
 <script>
-const origen = [20.4705382, -116.8414686]; // Calle Jacinto 1126, La Morita
-let map = L.map('map').setView(origen, 20);
+(() => {
+    const articulosBody = document.getElementById("articulosBody");
+    const totalGeneralElem = document.getElementById("totalGeneral");
+    const formAgregar = document.getElementById("formAgregar");
+    const nombreInput = document.getElementById("nombreArticulo");
+    const precioInput = document.getElementById("precioArticulo");
+    const tipoSelect = document.getElementById("tipoUnidad");
+    const categoriaSelect = document.getElementById("categoriaArticulo");
+    const inputKM = document.getElementById("inputKM");
+    const checkExtra = document.getElementById("checkExtra");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap'
-}).addTo(map);
+    let articulos = [
+        { id: 1, nombre: "6 pack Tecate", unidades: 1, precioUnidad: 100, tipo: "unidad", categoria: "CERVEZA" }
+      
+    ];
+    let proximoId = 2;
 
-let rutaControl;
+    function calcularTotal() {
+        let totalGeneral = 0;
+        const aplicarExtra = checkExtra.checked;
 
-// función para buscar dirección en OpenStreetMap
-async function geocodificar(direccion) {
-  // Si el usuario no pone ciudad o país, los añadimos
-  if (!direccion.toLowerCase().includes("tijuana")) {
-    direccion += ", Tijuana, Baja California, México";
-  }
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`;
-  const res = await fetch(url, { headers: { "Accept-Language": "es" }});
-  const data = await res.json();
-  if (data.length === 0) throw new Error("No se encontró la dirección");
-  return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-}
+        articulos.forEach(({ unidades, precioUnidad, categoria }) => {
+            let precioTotal = unidades * precioUnidad;
+            if (aplicarExtra && (categoria === "LICOR" || categoria === "CERVEZA")) {
+                precioTotal *= 1.4;
+            }
+            totalGeneral += precioTotal;
+        });
 
-document.getElementById("btnRuta").addEventListener("click", async () => {
-  const destinoTexto = document.getElementById("destino").value.trim();
-  if (!destinoTexto) {
-    alert("Por favor escribe una dirección destino.");
-    return;
-  }
+        const km = parseFloat(inputKM.value) || 0;
+        const costoKM = km * 10;
+        totalGeneral += costoKM;
 
-  document.getElementById("info").textContent = "Buscando dirección...";
-  try {
-    const destinoCoord = await geocodificar(destinoTexto);
+        totalGeneralElem.textContent = `Total general: $${totalGeneral.toFixed(2)} (incluye $${costoKM.toFixed(2)} por ${km} km)`;
+    }
 
-    if (rutaControl) map.removeControl(rutaControl);
+    function actualizarLista() {
+        articulosBody.innerHTML = "";
+        const aplicarExtra = checkExtra.checked;
 
-    rutaControl = L.Routing.control({
-      waypoints: [L.latLng(origen), L.latLng(destinoCoord)],
-      lineOptions: { styles: [{ color: "#2980b9", weight: 5 }] },
-      createMarker: () => null,
-      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-      addWaypoints: false,
-      routeWhileDragging: false,
-      show: false
-    }).addTo(map);
+        articulos.forEach((articulo) => {
+            let precioTotal = articulo.unidades * articulo.precioUnidad;
+            if (aplicarExtra && (articulo.categoria === "LICOR" || articulo.categoria === "CERVEZA")) {
+                precioTotal *= 1.4;
+            }
 
-    rutaControl.on('routesfound', function(e) {
-      const km = e.routes[0].summary.totalDistance / 1000;
-      const tiempo = e.routes[0].summary.totalTime / 60;
-      document.getElementById("info").textContent = 
-        `Distancia: ${km.toFixed(1)} km | Tiempo estimado: ${tiempo.toFixed(0)} min`;
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td>${articulo.nombre}</td>
+                <td class="units">
+                    <input type="number" class="input-unidades" value="${articulo.unidades}" min="1" data-id="${articulo.id}">
+                </td>
+                <td>${articulo.categoria}</td>
+                <td class="price">$${precioTotal.toFixed(2)}</td>
+                <td><button class="btn-eliminar" data-id="${articulo.id}">Eliminar</button></td>
+            `;
+            articulosBody.appendChild(fila);
+        });
+
+        calcularTotal();
+    }
+
+    formAgregar.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nombre = nombreInput.value.trim();
+        const precio = parseFloat(precioInput.value);
+        const tipo = tipoSelect.value;
+        const categoria = categoriaSelect.value;
+
+        if (!nombre || !precio || !tipo || !categoria) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        articulos.push({
+            id: proximoId++,
+            nombre,
+            unidades: 1,
+            precioUnidad: precio,
+            tipo,
+            categoria
+        });
+
+        formAgregar.reset();
+        actualizarLista();
     });
 
-  } catch (err) {
-    console.error(err);
-    alert("No se encontró la dirección. Intenta escribirla más completa (ej. incluye Tijuana, B.C.)");
-    document.getElementById("info").textContent = "Distancia: —";
-  }
-});
+    articulosBody.addEventListener("input", (e) => {
+        if (e.target.classList.contains("input-unidades")) {
+            const id = parseInt(e.target.dataset.id);
+            const nuevasUnidades = parseInt(e.target.value);
+            const articulo = articulos.find(a => a.id === id);
+            if (articulo && nuevasUnidades > 0) {
+                articulo.unidades = nuevasUnidades;
+                actualizarLista();
+            }
+        }
+    });
+
+    articulosBody.addEventListener("click", (e) => {
+        if (e.target.classList.contains("btn-eliminar")) {
+            const id = parseInt(e.target.dataset.id);
+            articulos = articulos.filter(a => a.id !== id);
+            actualizarLista();
+        }
+    });
+
+    inputKM.addEventListener("input", calcularTotal);
+    checkExtra.addEventListener("change", actualizarLista);
+
+    actualizarLista();
+})();
 </script>
 </body>
 </html>
