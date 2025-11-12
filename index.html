@@ -303,7 +303,7 @@
         articulosBody.innerHTML = '';
         let totalGeneral = 0;
         articulos.forEach(({ id, nombre, unidades, precioUnidad, tipo }) => {
-            const precioTotal = unidades * precioUnidad * 0.4;
+            const precioTotal = unidades * precioUnidad + (* 0.4);
             totalGeneral += precioTotal;
 
             const fila = document.createElement('tr');
